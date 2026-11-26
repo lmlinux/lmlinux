@@ -27,15 +27,18 @@ on**:
 The assistant works locally in both scenarios; administrative changes still
 require your explicit authorization through `sudo ai`.
 
-- **Local inference**: a llama-server systemd service serves Qwen3.5-9B at
-  `127.0.0.1:21718` (OpenAI-compatible API with tool calling), fully
-  offline.
-- **First-boot assistant**: hax handles install-time problems (network,
-  mounts, apt sources, services) through its native llama.cpp provider.
-  Sessions survive Ctrl+C and can be resumed with their prior context.
-- **Model as firmware**: the model payload is pinned by sha256 and baked
-  into the live image at build time — the repository never carries
-  weights.
+### Component responsibilities
+
+- **llama-server — local inference:** runs as a systemd service and serves
+  Qwen3.5-9B at `127.0.0.1:21718`, fully offline, through an OpenAI-compatible
+  API with tool calling.
+- **hax — assistant interaction and sessions:** handles installation and
+  rescue configuration problems (network, mounts, APT sources, and services)
+  through its native llama.cpp provider. Sessions survive Ctrl+C and can be
+  resumed with their prior context.
+- **Model files — build-time payload:** the model is pinned by SHA-256 and
+  baked into the live image at build time; the Git repository never carries
+  model weights.
 
 ### Current status and validation
 
@@ -296,12 +299,16 @@ lmlinux 把本地语言模型集成进 Debian 13。这套系统——live 会话
 两个场景中的助手都在本地运行；涉及管理员变更时，仍需你通过
 `sudo ai` 明确授权。
 
-- **本地推理**：llama-server 以 systemd 服务在 `127.0.0.1:21718` 提供
-  Qwen3.5-9B 推理（OpenAI 兼容 API、支持工具调用），完全离线。
-- **装机助手**：hax 通过原生 llama.cpp provider 处理装机配置期问题
-  （网络、挂载、软件源、服务）。会话可跨 Ctrl+C 保存，并带原上下文恢复。
-- **模型即固件**：模型负载以 sha256 钉死哈希、构建时烤入 live 镜像
-  ——本仓库永不携带模型权重。
+### 核心组成与职责
+
+- **llama-server——本地推理服务：** 以 systemd 服务运行，在
+  `127.0.0.1:21718` 提供 Qwen3.5-9B 推理，完全离线，并支持工具调用的
+  OpenAI 兼容 API。
+- **hax——助手交互与会话管理：** 通过原生 llama.cpp provider 处理安装和
+  救援中的配置问题（网络、挂载、APT 软件源和服务）。会话可跨 Ctrl+C 保存，
+  并带原上下文恢复。
+- **模型文件——构建期载荷：** 模型以 SHA-256 钉死哈希，构建时写入 live
+  镜像；Git 仓库永不携带模型权重。
 
 ### 当前状态与验证
 
