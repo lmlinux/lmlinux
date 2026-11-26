@@ -20,9 +20,9 @@ on**:
 1. **Offline rescue**: investigate and help repair an existing system from
    the live or installed environment when internet access is unavailable —
    including configuration, package-source, mount, and service problems.
-2. **First installation and first boot without a network**: get help with
-   initial network, APT-source, mount, and service configuration and
-   troubleshoot setup problems before the machine is online.
+2. **First-time installation and configuration without a network**: get help
+   with initial network, APT-source, mount, and service configuration and
+   troubleshoot installation and setup problems before the machine is online.
 
 The assistant works locally in both scenarios; administrative changes still
 require your explicit authorization through `sudo ai`.
@@ -293,8 +293,8 @@ lmlinux 把本地语言模型集成进 Debian 13。这套系统——live 会话
 
 1. **离线救援**：无法联网时，从 live 或已安装环境排查并协助修复既有
    系统的配置、软件源、挂载和服务故障。
-2. **首次安装及首次启动无网络**：在机器尚未联网时，协助完成网络、
-   APT 源、挂载和服务等初始配置，排查安装及装后首次启动的问题。
+2. **无网络环境下的首次安装配置**：在机器尚未联网时，协助完成网络、
+   APT 源、挂载和服务等初始配置，排查安装配置问题。
 
 两个场景中的助手都在本地运行；涉及管理员变更时，仍需你通过
 `sudo ai` 明确授权。
