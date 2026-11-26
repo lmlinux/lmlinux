@@ -1,0 +1,11 @@
+*.iso
+*.qcow2
+*.img
+*.gguf
+models/
+node_modules/
+__pycache__/
+.venv*/
+*.deb
+*.build/
+build/debian/out/

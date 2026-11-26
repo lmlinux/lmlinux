@@ -1,0 +1,67 @@
+#!/bin/sh
+# lmlinux-ai-core postrm — undo the enablement state; purge removes
+# everything the package created, so a clean removal leaves no orphans.
+
+set -e
+
+# Bytecode residue cleanup, common to remove and purge: dpkg removes the
+# tracked files, but the __pycache__ trees the postinst's compileall created
+# are untracked and keep the /opt/ai-core directories alive as orphans.
+# User-added venv content (pip installs) keeps its files; only empty
+# directories go.
+if [ -d /opt/ai-core ]; then
+  find /opt/ai-core -depth -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
+  # rmdir must run per-directory (\;), not batched (+): depth-first order
+  # guarantees children are gone before the parent is evaluated as empty —
+  # a batched rmdir would leave the whole chain behind.
+  find /opt/ai-core -depth -type d -empty -exec rmdir {} \; 2>/dev/null || true
+fi
+
+case "$1" in
+  remove|abort-install)
+    # remove: drop the boot-time enablement symlink so no dangling unit
+    #   reference survives the removal (the unit file under
+    #   /usr/lib/systemd/system is removed by dpkg together with the
+    #   package files).
+    # abort-install: a fresh install failed after postinst may have enabled
+    #   the unit — undo the enablement (idempotent if it never ran).
+    if command -v deb-systemd-helper >/dev/null 2>&1; then
+      deb-systemd-helper disable ai-core.service >/dev/null || true
+    fi
+    if [ -d /run/systemd/system ]; then
+      systemctl --system daemon-reload >/dev/null || true
+    fi
+    ;;
+  purge)
+    if command -v deb-systemd-helper >/dev/null 2>&1; then
+      deb-systemd-helper purge ai-core.service >/dev/null || true
+    fi
+    if [ -d /run/systemd/system ]; then
+      systemctl --system daemon-reload >/dev/null || true
+    fi
+    # Conffiles are removed by dpkg itself; /etc/ai-core may remain as an
+    # empty directory, so drop it when empty. Both engine model locations
+    # (created by the image builder / model import, NOT dpkg-owned — the
+    # multi-GB model lives there) go away on purge by design. The skel
+    # hax config seed is system-owned like /root/.litert-lm; copies already
+    # delivered into user homes stay (they are user data now).
+    rm -rf /root/.litert-lm /etc/skel/.config/hax /opt/ai-core/models
+    rmdir /opt/ai-core 2>/dev/null || true
+    rmdir /etc/ai-core 2>/dev/null || true
+    ;;
+  disappear|abort-upgrade|upgrade|failed-upgrade)
+    # disappear: the package was overwritten by another package; its files
+    #   (including the unit) now belong to the overwriter — touching the
+    #   enablement state would interfere with the replacement, so no-op.
+    # abort-upgrade: the old version's files are restored and stay live —
+    #   no postinst state to undo (postinst configure only restarts an
+    #   already-running service on upgrades), so no-op.
+    # upgrade/failed-upgrade: the standard no-op transitions.
+    ;;
+  *)
+    echo "postrm called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

@@ -1,0 +1,13 @@
+# lmlinux ai-core model import (offline media / first boot).
+#
+# Same unit packaging/ai-core/install.sh generates (no [Install] section:
+# it is pulled in by ai-core.service's Requires=); when editing one side, keep
+# the other in sync. Installed to /usr/lib/systemd/system.
+[Unit]
+Description=lmlinux ai-core model import (offline media / first boot)
+Before=ai-core.service
+
+[Service]
+Type=oneshot
+Environment=HOME=/root
+ExecStart=/opt/ai-core/import-model.sh

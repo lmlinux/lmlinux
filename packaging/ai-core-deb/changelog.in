@@ -1,0 +1,72 @@
+lmlinux-ai-core (@VERSION@) lmlinux; urgency=medium
+
+  * Add a readiness gate to the `ai` wrapper: when the local engine
+    endpoint is not answering yet but the systemd units report start-up
+    in progress, wait for it with plain progress lines instead of
+    letting hax's ~16 s startup auto-discovery fail ("failed to
+    auto-discover model ... / is llama-server running?") and drop the
+    REPL into a no-provider state — the exact first-run failure a real
+    user hit on a cold live boot. A deliberately stopped or failed
+    engine gets one actionable line; no curl or no systemd (chroot
+    package tests) passes straight through so `ai --version` never
+    blocks. Validated on the llama-server engine path; the non-default
+    LiteRT-LM flavor is unchanged.
+
+ -- lmlinux project <lmlinux@localhost>  Wed, 25 Nov 2026 15:10:00 +0000
+
+lmlinux-ai-core (0.2.0-5) lmlinux; urgency=medium
+
+  * Seed the hax XDG config (provider, model, llama.cpp base_url) in
+    postinst: /etc/skel for accounts created later and ~/.config/hax for
+    existing human users, never overwriting a present file. Bare `hax`
+    in a non-login desktop shell previously had no provider/endpoint
+    contract (profile.d is only sourced by login shells), so the
+    interactive /provider picker probed the llama.cpp built-in default
+    endpoint and reported "server not reachable" on a healthy local
+    engine; the seed carries the same contract as the `ai` wrapper at
+    lower precedence than environment and state.json, so interactive
+    /provider and /model choices still win. The LiteRT-LM flavor keeps
+    its `ai`-wrapper entry paths (hax pins hosted openai endpoints).
+  * Assert both seed paths in package validation: a user created before
+    the install is seeded by postinst, and a user created after it
+    inherits the file from /etc/skel.
+
+ -- lmlinux project <lmlinux@localhost>  Wed, 25 Nov 2026 13:30:00 +0000
+
+lmlinux-ai-core (0.2.0-4) lmlinux; urgency=medium
+
+  * Skill text: verify-then-prescribe guardrail. Network collection combo
+    now probes what actually exists (command -v for DHCP clients / ifup,
+    systemctl list-unit-files for network units), and the fix may only
+    name binaries and units the collected output confirmed — prefer the
+    configured channel (ifup for /etc/network/interfaces).
+
+ -- lmlinux project <lmlinux@localhost>  Wed, 25 Nov 2026 10:58:00 +0000
+
+lmlinux-ai-core (0.2.0-3) lmlinux; urgency=medium
+
+  * Install the tuned hax skill text as /opt/ai-core/AGENTS.md in both the
+    manual/image installer and the Debian package.
+  * Assert the skill text in package and installed-system validation.
+
+ -- lmlinux project <lmlinux@localhost>  Tue, 24 Nov 2026 22:45:00 +0000
+
+lmlinux-ai-core (0.2.0-2) lmlinux; urgency=medium
+
+  * Declare the llama.cpp runtime shared-library dependencies so apt installs
+    them on minimal Debian 13 systems.
+  * Run the minbase-chroot llama-server startup gate in package validation,
+    including when the package cache is already up to date.
+
+ -- lmlinux project <lmlinux@localhost>  Tue, 24 Nov 2026 21:45:00 +0000
+
+lmlinux-ai-core (0.2.0-1) lmlinux; urgency=medium
+
+  * Make hax 0.7.0 the sole shipped harness and the `ai` default.
+  * Make official llama-server b12669 and Qwen3.5-4B GGUF the default engine
+    and model; retain LiteRT-LM 0.19.2 as the non-default Gemma flavor.
+  * Verify GGUF imports and register MODEL_PATH/MODEL_SHA256 in config.env.
+  * Ship upstream license notices for hax and llama.cpp; no prompt asset is
+    injected into hax.
+
+ -- lmlinux project <lmlinux@localhost>  Tue, 24 Nov 2026 18:00:00 +0000

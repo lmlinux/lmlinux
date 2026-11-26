@@ -1,0 +1,38 @@
+# lmlinux-ai-core lintian overrides — deliberate deviations from Debian
+# archive policy for this distribution package.
+
+# /opt/ai-core is the established ai-core home; the prebuilt venv and
+# payload intentionally live there, not under /usr.
+lmlinux-ai-core: dir-or-file-in-opt
+
+# The venv embeds upstream binary wheels (litert-lm, numpy): they are not
+# rebuilt, stripped, or relinked for this package, so wheel-typical RPATHs,
+# libc linking, and executable shared objects carry over as-is.
+lmlinux-ai-core: unstripped-binary-or-object
+lmlinux-ai-core: shared-library-is-executable
+lmlinux-ai-core: shared-library-lacks-prerequisites
+lmlinux-ai-core: relative-library-search-path
+lmlinux-ai-core: missing-dependency-on-libc
+lmlinux-ai-core: library-not-linked-against-libc
+
+# venv console scripts use their own interpreter under /opt/ai-core/venv;
+# lintian cannot resolve that path outside the installed system.
+lmlinux-ai-core: wrong-path-for-interpreter
+
+# The copyright file reproduces numpy's bundled LICENSE.txt verbatim: it
+# carries the sub-licenses of the vendored binary payload
+# (numpy.libs/libscipy_openblas: GPL-3.0-or-later WITH GCC-exception-3.1),
+# and the GCC runtime exception text is not in /usr/share/common-licenses,
+# so referencing the plain GPL would drop required notice text.
+lmlinux-ai-core: copyright-file-contains-full-gpl-license
+
+# Distribution package: no routable maintainer domain exists yet.
+lmlinux-ai-core: bogus-mail-host
+lmlinux-ai-core: bogus-mail-host-in-debian-changelog
+
+# The official hax release is a pinned, statically linked upstream executable.
+# Its embedded curl, mbedtls and zlib cannot be split into system dependencies
+# without replacing the verified upstream artifact with a downstream rebuild.
+lmlinux-ai-core: embedded-library curl [usr/bin/hax]
+lmlinux-ai-core: embedded-library mbedtls [usr/bin/hax]
+lmlinux-ai-core: embedded-library zlib [usr/bin/hax]

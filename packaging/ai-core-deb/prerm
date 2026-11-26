@@ -1,0 +1,25 @@
+#!/bin/sh
+# lmlinux-ai-core prerm — stop the service before the files vanish.
+# On upgrade the service keeps running (postinst restarts it after the new
+# files are in place); on remove the files are about to disappear, so an
+# active service is stopped.
+
+set -e
+
+case "$1" in
+  remove|deconfigure)
+    if [ -d /run/systemd/system ] \
+       && command -v systemctl >/dev/null 2>&1 \
+       && systemctl is-active --quiet ai-core.service; then
+      systemctl stop ai-core.service || true
+    fi
+    ;;
+  upgrade|failed-upgrade)
+    ;;
+  *)
+    echo "prerm called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0

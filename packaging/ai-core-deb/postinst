@@ -1,0 +1,123 @@
+#!/bin/sh
+# lmlinux-ai-core postinst — configure the package.
+#
+# The deb replaces the packaging/ai-core/install.sh AI_CORE_IMAGE_BUILD=1
+# path: files and units come from the package, the service is ENABLED but
+# never started here. First start happens at boot (after the model import
+# unit pulled in via Requires=); on a live upgrade the service is restarted
+# only if it is already running.
+
+set -e
+
+case "$1" in
+  configure)
+    # Root model registry config: create with the Phase 0 defaults when
+    # absent, never overwrite on upgrade (users tune max_num_tokens).
+    # Same content install.sh writes; lives outside /etc, so dpkg does not
+    # track it and postrm purge removes it with the model registry.
+    if [ ! -e /root/.litert-lm/config.json ]; then
+      mkdir -p /root/.litert-lm
+      cat > /root/.litert-lm/config.json <<'EOF'
+{
+  "default": {
+    "backend": "cpu",
+    "max_num_tokens": 16384
+  }
+}
+EOF
+      chmod 755 /root/.litert-lm
+      chmod 644 /root/.litert-lm/config.json
+    fi
+
+    # hax XDG config seed (real-machine finding, 2026-11-25): a bare `hax`
+    # in a non-login desktop shell gets none of /etc/profile.d's exports, so
+    # the interactive TUI probes the llama.cpp built-in default endpoint
+    # instead of the local engine and reports "server not reachable". A
+    # per-user ~/.config/hax/config.json carries the same contract as the
+    # `ai` wrapper at LOWER precedence than environment and state.json, so
+    # interactive /provider and /model choices still win. Seed /etc/skel
+    # for accounts created later (live sessions build /home from skel) and
+    # the homes of existing human users (d-i creates the account before
+    # late_command installs this deb). Never overwrite an existing file:
+    # user-tuned configs survive upgrades. The LiteRT-LM flavor is not
+    # seeded: openai is a hosted pinned provider in hax, its base_url is
+    # ignored, so that flavor keeps the `ai` wrapper / profile.d paths.
+    if [ -r /etc/ai-core/config.env ] \
+       && grep -qx 'ENGINE=llama-server' /etc/ai-core/config.env; then
+      . /etc/ai-core/config.env
+      hax_model=${MODEL_ALIAS:-qwen3.5-4b}
+      hax_port=${AI_CORE_PORT:-21718}
+      hax_seed() {
+        [ -e "$1" ] && return 0
+        mkdir -p "$(dirname "$1")"
+        cat > "$1" <<EOF
+{
+  "provider": "llamacpp",
+  "model": "$hax_model",
+  "providers": {
+    "llamacpp": {
+      "base_url": "http://127.0.0.1:$hax_port/v1"
+    }
+  }
+}
+EOF
+      }
+      if [ ! -e /etc/skel/.config/hax/config.json ]; then
+        hax_seed /etc/skel/.config/hax/config.json
+        chmod 755 /etc/skel/.config /etc/skel/.config/hax
+        chmod 644 /etc/skel/.config/hax/config.json
+      fi
+      getent passwd | awk -F: '$3 >= 1000 && $3 < 65534 {print $3";"$4";"$6}' \
+      | while IFS=';' read -r uid gid home; do
+          [ -d "$home" ] || continue
+          [ -e "$home/.config/hax/config.json" ] && continue
+          hax_seed "$home/.config/hax/config.json" \
+            || { echo "postinst: hax config seed failed for $home" >&2; continue; }
+          chown "$uid:$gid" "$home/.config" "$home/.config/hax" \
+            "$home/.config/hax/config.json"
+          chmod 755 "$home/.config" "$home/.config/hax"
+          chmod 644 "$home/.config/hax/config.json"
+        done
+    fi
+
+    # Byte-compile the bundled venv: it is packaged without .pyc (bytecode
+    # would be stale after mtime normalization), so compile it at install
+    # time. This is also a sanity check that the venv interpreter runs against
+    # the system Python and the optional LiteRT-LM payload is complete.
+    /opt/ai-core/venv/bin/python -m compileall -q /opt/ai-core/venv/lib
+
+    # Enable the service at boot — fail-loud (review finding: `|| true`
+    # here silently shipped systems without the boot enablement).
+    # deb-systemd-helper only manages the /etc/systemd/system symlink
+    # state, so it works in chroots (image builds, d-i late_command) and on
+    # live systems alike; fall back to systemctl for systems without
+    # init-system-helpers. ai-core-model-import has no [Install] section
+    # (it is pulled in by ai-core.service's Requires=) and needs no enablement.
+    if command -v deb-systemd-helper >/dev/null 2>&1; then
+      deb-systemd-helper enable ai-core.service >/dev/null
+    elif command -v systemctl >/dev/null 2>&1; then
+      systemctl enable ai-core.service >/dev/null
+    else
+      echo "postinst: neither deb-systemd-helper nor systemctl is available; cannot enable ai-core.service" >&2
+      exit 1
+    fi
+
+    # Live system only (absent in chroots: /run/systemd/system): pick up
+    # new/changed units, and restart an already-running service so an
+    # upgrade actually swaps the running venv/units.
+    if [ -d /run/systemd/system ]; then
+      systemctl --system daemon-reload >/dev/null || true
+      if systemctl is-active --quiet ai-core.service; then
+        systemctl try-restart ai-core.service || true
+      fi
+    fi
+    ;;
+  abort-upgrade|abort-remove|abort-deconfigure)
+    ;;
+  *)
+    echo "postinst called with unknown argument \`$1'" >&2
+    exit 1
+    ;;
+esac
+
+exit 0
