@@ -103,7 +103,7 @@ with the lmlinux AI stack baked in (several GiB with the real model).
    # 2eb28a574c67ce1b9cd6b306162a3f87ca1178ac291e310daa71b2c2bfea7ecd
    ```
 
-   - Exact size: **10,030,678,016 bytes**.
+   - Exact size: **10,030,678,016 bytes (about 10.03 GB)**.
    - The ghcr blob digest is the file's SHA-256, so this hash check completes
      end-to-end verification.
    - Only the literal `rc` OCI tag is published; there is no versioned
@@ -362,7 +362,7 @@ lmlinux AI 栈已烤入 live 系统（含真实模型时为数 GiB）。
    # 2eb28a574c67ce1b9cd6b306162a3f87ca1178ac291e310daa71b2c2bfea7ecd
    ```
 
-   - 精确大小：**10,030,678,016 字节**。
+   - 精确大小：**10,030,678,016 字节（约 10.03 GB）**。
    - ghcr 上的 blob digest 就是文件 SHA-256，哈希校验通过即完成端到端
      验证。
    - OCI 制品仅使用字面 `rc` 标签，不提供按版本号命名的 registry 标签，
