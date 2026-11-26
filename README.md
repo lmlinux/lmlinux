@@ -42,12 +42,22 @@ This exact image passed build-integrity checks, an independent artifact
 review, offline live-boot and install-to-disk probes, and offline installed-
 system cold-start, warm-follow-up, and bare-hax probes. These checks do not
 complete the behavioral, complete offline-rescue/first-install, real-user,
-or external-feedback gates required before GA. One unassisted offline-rescue
-run on a 16 GiB RAM / 4-vCPU VM did not finish after about 66 minutes: it
-changed APT sources to HTTP entries marked `[trusted=yes]`, altered
-resolver/NetworkManager state, and pursued `dummy0`/veth recovery without
-installing the rescue fixture. Expect long waits and review every proposed
-privileged change. An installed-boot observation left a tty1 login prompt in
+or external-feedback gates required before GA. Two APT-source repairs
+succeeded with the same 9B stack. In a controlled single-fault test, the
+assistant received only a natural-language request, with no repair commands,
+and replaced a broken cdrom-only APT source with official Debian 13
+repositories in 16m15s; `apt-get update` succeeded, and independent update
+and package-resolution checks passed. In the final installation test, the
+user observed another APT-source repair complete in about 8 minutes. Between
+those successes, a separate stress test deliberately chained multiple faults
+to explore the 9B model's limits without human intervention during the
+attempt. It was not a repeat of the single-fault repair and did not finish
+after about 66 minutes: it changed APT sources to HTTP entries marked
+`[trusted=yes]`, altered resolver/NetworkManager state, and pursued
+`dummy0`/veth recovery without installing the rescue fixture. The two
+successful repairs and the incomplete stress test are separate results; none
+alone completes the broader rescue validation. Expect long waits and review
+every proposed privileged change. An installed-boot observation left a tty1 login prompt in
 the foreground while LightDM/Cinnamon was starting on VT7; Ctrl+Alt+F7
 exposed the desktop. Logs from a later reinstallation show LightDM requesting
 VT7 activation about 17 and 39 seconds after boot, but the original
@@ -253,10 +263,16 @@ lmlinux 把本地语言模型集成进 Debian 13。这套系统——live 会话
 已通过构建完整性检查、独立制品复核、离线 live 启动与装硬盘初探，以及
 离线硬盘系统的冷启动、暖缓存追问和 bare-hax 终验。这些检查并未完成 GA
 前仍需通过的行为电池、完整离线救援 / 首次安装、真实用户和外部反馈门槛。
-一次在 16 GiB 内存 / 4 vCPU 虚拟机上的无人协助离线救援运行约 66 分钟仍
-未完成：它把 APT 源改成标有 `[trusted=yes]` 的 HTTP 条目，改动
-resolver/NetworkManager 状态，并转向 `dummy0`/veth 修复，最终仍未装上
-救援夹具。多轮修复可能需要长时间等待，每项特权变更都应先审查。一次装后
+同一 9B 栈已有两次成功的软件源修复。受控单故障测试只给自然语言请求、
+不提供修复命令，助手在 16 分 15 秒内把失效的仅 cdrom APT 源替换为
+Debian 13 官方源；`apt-get update` 成功，独立更新与软件包解析检查也通过。
+最后一次安装测试中，用户实测另一次软件源修复约 8 分钟完成。两次成功之间
+进行的另一场压力测试刻意连续叠加多个故障，全程无人干预，用于探索 9B
+能力上限，并非重复上述单故障修复。该测试约 66 分钟后仍未完成：它把 APT
+源改成标有 `[trusted=yes]` 的 HTTP 条目，改动 resolver/NetworkManager 状态，
+并转向 `dummy0`/veth 修复，最终仍未装上救援夹具。两次成功修复与这次未完成
+的压力测试是不同结果，任何一项都不单独代表完整救援场景已验收。多轮修复
+可能需要长时间等待，每项特权变更都应先审查。一次装后
 启动观察到前台停在 tty1 登录提示，而 LightDM/Cinnamon 正在 VT7 启动；
 按 Ctrl+Alt+F7 可看到桌面。后来重新安装系统的日志显示 LightDM 在开机约
 17 秒和 39 秒请求激活 VT7，但最初观察并未连续记录前台 VT 状态。随后
