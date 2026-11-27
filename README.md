@@ -64,17 +64,12 @@ require your explicit authorization through `sudo ai`.
   resolver/NetworkManager state, and pursued `dummy0`/veth recovery without
   installing the rescue fixture. Expect long waits and review every proposed
   privileged change.
-- **Display observations:**
-  - An installed boot left a tty1 login prompt in the foreground while
-    LightDM/Cinnamon was starting on VT7; Ctrl+Alt+F7 exposed the desktop.
-  - Logs from a later reinstallation show LightDM requesting VT7 activation
-    about 17 and 39 seconds after boot, but the original observation did not
-    continuously record foreground-VT state.
-  - A completely fresh, no-keyboard-input installation reached the GUI
-    automatically in nearly two minutes on the test VM.
-  - A separate initial HDD boot had an unreproduced
-    black-screen/unresponsive-VT transient requiring a hard reset; subsequent
-    final probes passed.
+- **Slow GUI entry:** entering the desktop after installation takes minutes,
+  not seconds: boot-time SHA-256 verification of the 5.29 GiB model overlaps
+  graphics startup. On the 16 GiB RAM / 4-vCPU test VM, a fresh install
+  reached the GUI in about two minutes. A separate initial HDD boot had an
+  unreproduced black-screen transient requiring a hard reset; subsequent
+  final probes passed.
 - **Validation boundary:** the successful repairs and incomplete stress test
   are separate results. None of these checks completes the behavioral,
   complete offline-rescue/first-install, real-user, or external-feedback gates
@@ -132,19 +127,13 @@ Building from source is equally supported; see [Building](#building).
 
 #### First boot and first prompt
 
-- **Graphical handoff:** on the 16 GiB RAM / 4-vCPU VMware test, a completely
-  fresh installed boot with no keyboard input activated the graphical VT at
-  about **118 seconds** and started the automatic Cinnamon user session at
-  about **177 seconds**.
-- **Why the wait happens:** boot-time SHA-256 verification of the existing
-  5.29 GiB model ran from about 36 to 180 seconds, overlapping graphics
-  initialization. llama-server loaded the model afterward, from about 183 to
-  212 seconds, so that later model-load window does not explain the preceding
-  graphical wait.
-- **What to do:** timing varies by hardware, so wait a few minutes before
-  assuming a problem. If a tty1 login prompt remains, Ctrl+Alt+F7 selects the
-  graphical VT. Do not change the default target or add tty1 autologin to work
-  around this transition.
+- **Slow GUI entry:** boot-time SHA-256 verification of the 5.29 GiB model
+  overlaps graphics startup, so the desktop takes minutes, not seconds, to
+  appear — about **2 minutes** on the 16 GiB RAM / 4-vCPU test VM. Timing
+  varies by hardware, so wait a few minutes before assuming a problem. If a
+  tty1 login prompt remains, Ctrl+Alt+F7 selects the graphical VT. Do not
+  change the default target or add tty1 autologin to work around this
+  transition.
 - **Memory requirement:** the 9B model needs **16 GiB of RAM**.
 - **First-prompt latency:** the first prompt after boot takes minutes, not
   seconds. It includes model loading and cold evaluation of the assistant's
@@ -328,14 +317,10 @@ lmlinux 把本地语言模型集成进 Debian 13。这套系统——live 会话
   HTTP 条目，改动 resolver/NetworkManager 状态，并转向 `dummy0`/veth
   修复，最终仍未装上救援夹具。多轮修复可能需要长时间等待，每项特权变更
   都应先审查。
-- **显示现象：**
-  - 一次装后启动观察到前台停在 tty1 登录提示，而 LightDM/Cinnamon 正在
-    VT7 启动；按 Ctrl+Alt+F7 可看到桌面。
-  - 后来重新安装系统的日志显示 LightDM 在开机约 17 秒和 39 秒请求激活
-    VT7，但最初观察并未连续记录前台 VT 状态。
-  - 随后一次全程无键盘输入的全新安装在测试 VM 近 2 分钟后自动进入 GUI。
-  - 另一次首次 HDD 启动曾出现未复现的黑屏 / 虚拟终端无响应，需要硬复位；
-    后续终验通过。
+- **进入 GUI 较慢：** 安装后进入桌面需要数分钟而非数秒——开机时对
+  5.29 GiB 模型做 SHA-256 校验，与图形初始化重叠。在 16 GiB 内存、
+  4 vCPU 的测试 VM 上，全新安装约 2 分钟进入 GUI。另一次首次 HDD 启动
+  曾出现未复现的黑屏，需要硬复位；后续终验通过。
 - **验证边界：** 两次成功修复与未完成的压力测试是不同结果。上述检查均未
   完成 GA 前仍需通过的行为电池、完整离线救援 / 首次安装、真实用户和外部
   反馈门槛。下文执行信任层仍是路线图方向，不是当前能力。
@@ -389,15 +374,11 @@ lmlinux AI 栈已烤入 live 系统（含真实模型时为数 GiB）。
 
 #### 首次启动与首次提问
 
-- **图形切换：** 在 16 GiB 内存、4 vCPU VMware 测试中，一次全程无键盘
-  输入的全新安装启动在约 **118 秒**自动激活图形 VT，并在约 **177 秒**
-  开始 Cinnamon 用户会话。
-- **等待期间在做什么：** 对已有 5.29 GiB 模型的启动期 SHA-256 校验从约
-  36 秒持续到 180 秒，与图形初始化重叠。llama-server 随后才在约
-  183–212 秒加载模型，因此这段较晚的模型加载不能解释此前的图形等待。
-- **如何处理：** 不同硬件耗时会不同，请先等待数分钟，不要急于认定启动
-  异常。如果仍停在 tty1 登录提示，可按 Ctrl+Alt+F7 选择图形 VT。不要为
-  绕过这个切换过程而修改默认 target 或添加 tty1 自动登录。
+- **进入 GUI 较慢：** 开机时对 5.29 GiB 模型的 SHA-256 校验与图形初始化
+  重叠，桌面需数分钟而非数秒才出现——16 GiB 内存、4 vCPU 的测试 VM 实测
+  约 **2 分钟**。不同硬件耗时会不同，请先等待数分钟再判断是否异常；若仍
+  停在 tty1 登录提示，可按 Ctrl+Alt+F7 选择图形 VT。不要为绕过这个过程
+  修改默认 target 或添加 tty1 自动登录。
 - **内存要求：** 9B 模型需要 **16 GiB 内存**。
 - **首次响应延迟：** 开机后第一个问题需要分钟级而非秒级响应，既包括模型
   加载，也包括助手约 2.4K-token 系统提示词的冷求值。在 4 vCPU 的 9B
