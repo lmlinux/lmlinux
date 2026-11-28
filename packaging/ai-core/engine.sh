@@ -15,8 +15,8 @@ case "$ENGINE" in
   llama-server)
     AI_CORE_PORT=${AI_CORE_PORT:-21718}
     LLAMA_HOME=${LLAMA_HOME:-$AI_CORE_HOME/llama-b12669}
-    MODEL_PATH=${MODEL_PATH:-$AI_CORE_HOME/models/Qwen3.5-4B-Q4_K_M.gguf}
-    MODEL_ALIAS=${MODEL_ALIAS:-qwen3.5-4b}
+    MODEL_PATH=${MODEL_PATH:-$AI_CORE_HOME/models/Qwen3.5-9B-Q4_K_M.gguf}
+    MODEL_ALIAS=${MODEL_ALIAS:-qwen3.5-9b}
     LD_LIBRARY_PATH=$LLAMA_HOME${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}
     export LD_LIBRARY_PATH
     exec "$LLAMA_HOME/llama-server" \

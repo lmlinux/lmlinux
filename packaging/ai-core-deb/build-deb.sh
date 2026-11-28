@@ -28,7 +28,7 @@
 #                   test uses OUT_DIR=<testdir>) so the ISO builder's
 #                   newest-deb pick cannot ship a never-validated artifact
 #   DEB_VERSION     upstream version (default 0.2.0)
-#   DEB_REVISION    Debian revision (default 6)
+#   DEB_REVISION    Debian revision (default 7)
 #   VENV_TARBALL    explicit prebuilt venv tarball to embed (skips staging)
 #   VENV_CACHE_DIR  venv tarball cache dir (default build/debian/out,
 #                   independent of OUT_DIR; the cache filename embeds the
@@ -49,7 +49,7 @@ DEBDIR=$ROOT/packaging/ai-core-deb
 OUT=${OUT_DIR:-$ROOT/build/debian/out}
 VENV_CACHE_DIR=${VENV_CACHE_DIR:-$ROOT/build/debian/out}
 DEB_VERSION=${DEB_VERSION:-0.2.0}
-DEB_REVISION=${DEB_REVISION:-6}
+DEB_REVISION=${DEB_REVISION:-7}
 VENV_HOST=${VENV_HOST:-}
 PIP_MIRROR=${PIP_MIRROR:-https://pypi.tuna.tsinghua.edu.cn/simple}
 LITERT_LM_VERSION=0.19.2

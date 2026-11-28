@@ -37,8 +37,8 @@ while retaining the correct `LIVE_SHA256`.
 
 ## Model contract
 
-The live builder defaults to **Qwen3.5-9B Q4_K_M**, even though the standalone
-package and manual installer retain their Qwen3.5-4B package defaults:
+The live builder, standalone package, and manual installer default to
+**Qwen3.5-9B Q4_K_M**, the sole active model flavor:
 
 ```text
 MODEL_FILE=Qwen3.5-9B-Q4_K_M.gguf

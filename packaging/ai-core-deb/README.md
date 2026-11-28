@@ -2,10 +2,10 @@
 
 `lmlinux-ai-core` packages the ai-core file set as a real `.deb` for the live
 image and standalone installations. The package defaults are official
-llama-server b12669 + Qwen3.5-4B GGUF + hax 0.7.0. The live-image builder
-defaults to Qwen3.5-9B and pins that model's path, hash, and alias into the
-installed configuration and hax seed. LiteRT-LM 0.19.2 remains bundled as
-the non-default Gemma-flavor engine.
+llama-server b12669 + Qwen3.5-9B GGUF + hax 0.7.0, matching the sole active
+model flavor. The live-image builder still explicitly pins the model path,
+hash, alias, and hax seed for the distribution image. LiteRT-LM 0.19.2 remains
+bundled as the non-default Gemma-flavor engine.
 
 ## Build
 
@@ -15,7 +15,7 @@ packaging/ai-core-deb/build-deb.sh
 
 Output: `build/debian/out/lmlinux-ai-core_<version>-<rev>_amd64.deb` plus a
 `.sha256` sidecar. Environment: `OUT_DIR` (shippable debs; test-only revisions
-must go elsewhere), `DEB_VERSION` (default 0.2.0), `DEB_REVISION` (default 6),
+must go elsewhere), `DEB_VERSION` (default 0.2.0), `DEB_REVISION` (default 7),
 `VENV_TARBALL`, `VENV_CACHE_DIR`, `VENV_HOST`, `PIP_MIRROR`,
 `VENV_REBUILD_OVERWRITE=1`, and `FORCE_REBUILD=1`.
 

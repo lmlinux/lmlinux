@@ -125,6 +125,16 @@ with the lmlinux AI stack baked in (several GiB with the real model).
 
 Building from source is equally supported; see [Building](#building).
 
+#### Standalone install on an existing system
+
+The AI stack also installs alone, without the ISO, on an existing Debian 13
+amd64 system: run `packaging/ai-core/install.sh` as root. It fetches the
+sha256-pinned llama.cpp engine, hax, and the Qwen3.5-9B model (network
+required), or installs fully offline from staged USB media — the pinned
+engine and harness archives plus the GGUF model file. The staging list,
+exact command, and prerequisites are in `packaging/ai-core/README.md`. The
+9B model needs 16 GiB of RAM.
+
 #### First boot and first prompt
 
 - **Slow GUI entry:** boot-time SHA-256 verification of the 5.29 GiB model
@@ -371,6 +381,14 @@ lmlinux AI 栈已烤入 live 系统（含真实模型时为数 GiB）。
      5.29 GiB 模型；10 GiB 盘实测在「安装系统」步失败。
 
 从源码构建同样完全支持，见[构建](#构建)。
+
+#### 单独安装到已有系统
+
+AI 栈也可以不装 ISO、单独安装到已有的 Debian 13 amd64 系统：以 root 运行
+`packaging/ai-core/install.sh`。它会拉取 sha256 钉死的 llama.cpp 引擎、hax
+与 Qwen3.5-9B 模型（需联网）；也可以完全离线，从 U 盘预置的引擎与助手归档
+加 GGUF 模型文件安装。预置清单、精确命令与目标机前提见
+`packaging/ai-core/README.md`。9B 模型需要 16 GiB 内存。
 
 #### 首次启动与首次提问
 

@@ -1,7 +1,7 @@
 #!/bin/bash
 # lmlinux ai-core one-command installer
 #
-# Default flavor: Qwen3.5-4B GGUF + official llama-server b12669 + hax 0.7.0.
+# Default flavor: Qwen3.5-9B GGUF + official llama-server b12669 + hax 0.7.0.
 # The non-default ENGINE=litert-lm path retains the Gemma 4 E4B flavor.
 # Everything listens only on loopback; hax loads the installed AGENTS.md skill text.
 #
@@ -12,7 +12,8 @@
 #   HF_MIRROR                Model mirror (default https://hf-mirror.com)
 #   HAX_ARCHIVE              Optional local hax release archive (hash-checked)
 #   LLAMA_ARCHIVE            Optional local llama.cpp release archive (hash-checked)
-#   AI_CORE_IMAGE_BUILD=1    Skip model download, service startup, and smoke checks
+#   AI_CORE_MODEL_SOURCE     Optional local GGUF file, raw block device, or "media"
+#   AI_CORE_IMAGE_BUILD=1    Skip automatic model download, service startup, and smoke checks
 #
 # Trust model: model and binary archives are sha256-pinned. hax comes only from
 # github.com/OleksandrChekhovskyi/hax releases (MIT license, redistribution
@@ -40,10 +41,10 @@ ENGINE=${ENGINE_REQUESTED:-${ENGINE:-llama-server}}
 case "$ENGINE" in
   llama-server)
     DEFAULT_PORT=21718
-    MODEL_REPO=unsloth/Qwen3.5-4B-GGUF
-    MODEL_FILE=Qwen3.5-4B-Q4_K_M.gguf
-    MODEL_ID=qwen3.5-4b
-    MODEL_SHA256=00fe7986ff5f6b463e62455821146049db6f9313603938a70800d1fb69ef11a4
+    MODEL_REPO=unsloth/Qwen3.5-9B-GGUF
+    MODEL_FILE=Qwen3.5-9B-Q4_K_M.gguf
+    MODEL_ID=qwen3.5-9b
+    MODEL_SHA256=03b74727a860a56338e042c4420bb3f04b2fec5734175f4cb9fa853daf52b7e8
     MODEL_PATH=$AI_CORE_HOME/models/$MODEL_FILE
     ;;
   litert-lm)
@@ -96,20 +97,37 @@ fetch_verified_archive() {
 }
 
 # ── 1. System dependencies ──────────────────────────────────
-if command -v apt-get >/dev/null; then
+if [ "$ENGINE" = "llama-server" ]; then
+  # A pre-satisfied dependency set must work without a package manager or network.
+  if ! command -v curl >/dev/null 2>&1; then
+    log "Required dependency missing: curl"
+    curl_install_error() {
+      log "ERROR: required dependency 'curl' is missing and automatic installation failed. Install curl from local installation media or a configured package source, then rerun install.sh."
+      exit 1
+    }
+    if command -v apt-get >/dev/null 2>&1; then
+      # Separate guarded statements preserve the online auto-install path.
+      # Suppress package-manager diagnostics so an offline failure produces
+      # only the actionable dependency error, not a raw APT/DNF failure dump.
+      apt-get update -qq >/dev/null 2>&1 || curl_install_error
+      apt-get install -y -qq curl >/dev/null 2>&1 || curl_install_error
+    elif command -v dnf >/dev/null 2>&1; then
+      dnf install -y -q curl >/dev/null 2>&1 || curl_install_error
+    else
+      log "ERROR: required dependency 'curl' is missing and no supported package manager is available. Install curl from local installation media or a configured package source, then rerun install.sh."
+      exit 1
+    fi
+    command -v curl >/dev/null 2>&1 || curl_install_error
+  else
+    log "Dependency check: curl is present; skipping package-manager operations"
+  fi
+elif command -v apt-get >/dev/null; then
+  # LiteRT-LM dependency behavior is unchanged.
   # Separate statements: "update && install" would swallow an update failure.
   apt-get update -qq
-  if [ "$ENGINE" = "litert-lm" ]; then
-    apt-get install -y -qq python3-venv curl
-  else
-    apt-get install -y -qq curl
-  fi
+  apt-get install -y -qq python3-venv curl
 elif command -v dnf >/dev/null; then
-  if [ "$ENGINE" = "litert-lm" ]; then
-    dnf install -y -q python3 python3-pip curl || true   # Test machine path (Rocky)
-  else
-    dnf install -y -q curl || true
-  fi
+  dnf install -y -q python3 python3-pip curl || true   # Test machine path (Rocky)
 fi
 
 # ── 1.5 Loopback and port preflight (skipped during image builds) ──
@@ -204,18 +222,24 @@ fi
 log "Configuration: $AI_CORE_CONFIG (ENGINE=$ENGINE, HARNESS=hax, port $PORT)"
 
 # ── 5. Model (import + sha256 verification) ───────────────────
-if [ "${AI_CORE_IMAGE_BUILD:-0}" = "1" ]; then
-  log "Image build mode: skipping model download; the image builder supplies the pinned model"
-elif [ "$ENGINE" = "llama-server" ]; then
+if [ "$ENGINE" = "llama-server" ]; then
   if printf '%s  %s\n' "$MODEL_SHA256" "$MODEL_PATH" | sha256sum -c --status 2>/dev/null; then
     log "Model $MODEL_FILE is already imported and verified"
+  elif [ -n "${AI_CORE_MODEL_SOURCE:-}" ]; then
+    log "Importing the pinned model from AI_CORE_MODEL_SOURCE=$AI_CORE_MODEL_SOURCE"
+    AI_CORE_MODEL_SOURCE="$AI_CORE_MODEL_SOURCE" AI_CORE_MODEL_SHA256="$MODEL_SHA256" \
+      MODEL_PATH="$MODEL_PATH" AI_CORE_CONFIG="$AI_CORE_CONFIG" bash ./import-model.sh
+  elif [ "${AI_CORE_IMAGE_BUILD:-0}" = "1" ]; then
+    log "Image build mode: skipping model download; the image builder supplies the pinned model"
   else
     MODEL_DOWNLOAD="$WORK_DIR/$MODEL_FILE.download"
-    log "Downloading model (2.55 GiB from $HF_MIRROR)..."
+    log "Downloading model (5.29 GiB from $HF_MIRROR)..."
     curl -fL --retry 3 -o "$MODEL_DOWNLOAD" "$HF_MIRROR/$MODEL_REPO/resolve/main/$MODEL_FILE"
     AI_CORE_MODEL_SOURCE="$MODEL_DOWNLOAD" AI_CORE_MODEL_SHA256="$MODEL_SHA256" \
       MODEL_PATH="$MODEL_PATH" AI_CORE_CONFIG="$AI_CORE_CONFIG" bash ./import-model.sh
   fi
+elif [ "${AI_CORE_IMAGE_BUILD:-0}" = "1" ]; then
+  log "Image build mode: skipping model download; the image builder supplies the pinned model"
 else
   if "$VENV/bin/litert-lm" list 2>/dev/null | grep -q "$MODEL_ID"; then
     log "Model $MODEL_ID is already imported; skipping download"
@@ -251,6 +275,11 @@ log "Model import: ai-core-model-import.service (optional AI_CORE_MODEL_SOURCE, 
 
 # ── 7. systemd services ───────────────────────────────────────
 cat > /etc/systemd/system/ai-core-model-import.service <<'EOF'
+# lmlinux ai-core model import (offline media / first boot).
+#
+# Same unit packaging/ai-core/install.sh generates (no [Install] section:
+# it is pulled in by ai-core.service's Requires=); when editing one side, keep
+# the other in sync. Installed to /usr/lib/systemd/system.
 [Unit]
 Description=lmlinux ai-core model import (offline media / first boot)
 Before=ai-core.service
@@ -262,6 +291,11 @@ ExecStart=/opt/ai-core/import-model.sh
 EOF
 
 cat > /etc/systemd/system/ai-core.service <<'EOF'
+# lmlinux ai-core inference service; ENGINE selects llama-server or litert-lm.
+#
+# Same unit packaging/ai-core/install.sh generates; when editing one side,
+# keep the other in sync. Installed to /usr/lib/systemd/system (the distro
+# unit location; /etc/systemd/system is admin override territory).
 [Unit]
 Description=lmlinux ai-core inference service (ENGINE from config.env)
 After=network.target ai-core-model-import.service
@@ -306,7 +340,7 @@ EOF
 log "hax integration: /etc/profile.d/ai-core.sh (native llama.cpp provider by default)"
 
 if [ "${AI_CORE_IMAGE_BUILD:-0}" = "1" ]; then
-  log "✅ Image build mode installation complete (model and startup validation are deferred to first boot)"
+  log "✅ Image build mode installation complete (service startup and smoke validation are deferred to first boot)"
   exit 0
 fi
 

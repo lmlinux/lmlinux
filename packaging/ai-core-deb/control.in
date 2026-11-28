@@ -26,7 +26,7 @@ Installed-Size: @INSTALLED_SIZE@
 Description: lmlinux local AI inference core (llama-server + hax)
  The lmlinux ai-core as a Debian package: official llama-server b12669 and
  hax 0.7.0, the persistent inference and model-import systemd units, and the
- unified `ai` entry point. Qwen3.5-4B GGUF is the default model payload.
+ unified `ai` entry point. Qwen3.5-9B GGUF is the default model payload.
  .
  The bundled /opt/ai-core/venv retains LiteRT-LM 0.19.2 as the non-default
  Gemma-flavor engine. The model payload is NOT part of this package: it is

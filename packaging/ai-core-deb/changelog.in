@@ -1,5 +1,19 @@
 lmlinux-ai-core (@VERSION@) lmlinux; urgency=medium
 
+  * Align the package, standalone-installer, and traditional netinst defaults
+    with the sole active Qwen3.5-9B Q4_K_M flavor selected on 2026-11-25. The
+    parked 4B flavor remains available through explicit builder configuration
+    or manual configuration.
+  * Support standalone offline installation from staged media: skip
+    package-manager operations when curl is already present, report only an
+    actionable error when a missing dependency cannot be installed, and
+    import a hash-verified local GGUF through AI_CORE_MODEL_SOURCE before
+    trying the online model download.
+
+ -- lmlinux project <lmlinux@localhost>  Sat, 28 Nov 2026 07:04:18 +0000
+
+lmlinux-ai-core (0.2.0-6) lmlinux; urgency=medium
+
   * Add a readiness gate to the `ai` wrapper: when the local engine
     endpoint is not answering yet but the systemd units report start-up
     in progress, wait for it with plain progress lines instead of

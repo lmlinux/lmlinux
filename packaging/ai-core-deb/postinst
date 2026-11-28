@@ -45,7 +45,7 @@ EOF
     if [ -r /etc/ai-core/config.env ] \
        && grep -qx 'ENGINE=llama-server' /etc/ai-core/config.env; then
       . /etc/ai-core/config.env
-      hax_model=${MODEL_ALIAS:-qwen3.5-4b}
+      hax_model=${MODEL_ALIAS:-qwen3.5-9b}
       hax_port=${AI_CORE_PORT:-21718}
       hax_seed() {
         [ -e "$1" ] && return 0
