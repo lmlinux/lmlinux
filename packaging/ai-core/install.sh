@@ -279,7 +279,9 @@ cat > /etc/systemd/system/ai-core-model-import.service <<'EOF'
 #
 # Same unit packaging/ai-core/install.sh generates (no [Install] section:
 # it is pulled in by ai-core.service's Requires=); when editing one side, keep
-# the other in sync. Installed to /usr/lib/systemd/system.
+# the other in sync. The deb installs this unit to /usr/lib/systemd/system
+# (the distro unit location); install.sh writes its generated copy to
+# /etc/systemd/system (admin override territory).
 [Unit]
 Description=lmlinux ai-core model import (offline media / first boot)
 Before=ai-core.service
@@ -294,8 +296,9 @@ cat > /etc/systemd/system/ai-core.service <<'EOF'
 # lmlinux ai-core inference service; ENGINE selects llama-server or litert-lm.
 #
 # Same unit packaging/ai-core/install.sh generates; when editing one side,
-# keep the other in sync. Installed to /usr/lib/systemd/system (the distro
-# unit location; /etc/systemd/system is admin override territory).
+# keep the other in sync. The deb installs this unit to
+# /usr/lib/systemd/system (the distro unit location); install.sh writes its
+# generated copy to /etc/systemd/system (admin override territory).
 [Unit]
 Description=lmlinux ai-core inference service (ENGINE from config.env)
 After=network.target ai-core-model-import.service

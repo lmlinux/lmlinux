@@ -9,6 +9,7 @@ lmlinux-ai-core (@VERSION@) lmlinux; urgency=medium
     actionable error when a missing dependency cannot be installed, and
     import a hash-verified local GGUF through AI_CORE_MODEL_SOURCE before
     trying the online model download.
+  * Neutralize unit location comments for both deb and install.sh destinations.
 
  -- lmlinux project <lmlinux@localhost>  Sat, 28 Nov 2026 07:04:18 +0000
 
